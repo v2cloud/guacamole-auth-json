@@ -45,9 +45,10 @@ import org.apache.guacamole.net.auth.simple.SimpleConnectionGroupDirectory;
 import org.apache.guacamole.net.auth.simple.SimpleDirectory;
 import org.apache.guacamole.net.auth.simple.SimpleUser;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.glyptodon.guacamole.auth.json.ConfigurationService;
+import org.glyptodon.guacamole.auth.json.conf.ConfigurationService;
 import org.glyptodon.guacamole.auth.json.CryptoService;
 import org.glyptodon.guacamole.auth.json.RequestValidationService;
+import org.glyptodon.guacamole.auth.json.conf.DynamicConfigurationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,6 +81,13 @@ public class UserDataService {
      */
     @Inject
     private ConfigurationService confService;
+
+    /**
+     * Service for retrieving dynamic configuration information
+     * from an external configuration agent.
+     */
+    @Inject
+    private DynamicConfigurationService dynamicConfService;
 
     /**
      * Service for testing the validity of HTTP requests.
@@ -152,7 +160,7 @@ public class UserDataService {
 
             // Decrypt using defined encryption key
             byte[] decrypted = cryptoService.decrypt(
-                cryptoService.createEncryptionKey(confService.getSecretKey()),
+                cryptoService.createEncryptionKey(dynamicConfService.getSecretKey()),
                 DatatypeConverter.parseBase64Binary(base64)
             );
 
@@ -168,7 +176,7 @@ public class UserDataService {
 
             // Produce signature for decrypted data
             correctSignature = cryptoService.sign(
-                cryptoService.createSignatureKey(confService.getSecretKey()),
+                cryptoService.createSignatureKey(dynamicConfService.getSecretKey()),
                 receivedJSON
             );
 

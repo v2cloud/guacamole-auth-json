@@ -20,13 +20,17 @@
  * THE SOFTWARE.
  */
 
-package org.glyptodon.guacamole.auth.json;
+package org.glyptodon.guacamole.auth.json.conf;
 
 import com.google.inject.Inject;
+
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.environment.Environment;
+import org.glyptodon.guacamole.auth.json.ByteArrayProperty;
+import org.glyptodon.guacamole.auth.json.StringListProperty;
 
 /**
  * Service for retrieving configuration information regarding the JSON
@@ -69,6 +73,22 @@ public class ConfigurationService {
     };
 
     /**
+     * The property which defines the HTTP or HTTPS URI which should be used
+     * to reach the agent serving the dynamic configuration information.
+     * If not specified, null will be return. All configuration will be static then.
+     *
+     */
+    private static final URIGuacamoleProperty DYNAMIC_CONFIG_AGENT_URI =
+            new URIGuacamoleProperty() {
+
+                @Override
+                public String getName() {
+                    return "dynamic-config-agent-uri";
+                }
+
+            };
+
+    /**
      * Returns the symmetric key which will be used to encrypt and sign all
      * JSON data and should be used to decrypt and verify any received JSON
      * data. This is dictated by the "json-secret-key" property specified
@@ -99,6 +119,20 @@ public class ConfigurationService {
      */
     public Collection<String> getTrustedNetworks() throws GuacamoleException {
         return environment.getProperty(JSON_TRUSTED_NETWORKS, Collections.<String>emptyList());
+    }
+
+
+    /**
+     * Returns the HTTP or HTTPS URI which should be used to reach the dynamic config agent.
+     *
+     * @return
+     *     The HTTP or HTTPS URI which should be used to reach the dynamic config agent.
+     *
+     * @throws GuacamoleException
+     *     If the "dynamic-config-agent-uri" contains an invalid URI.
+     */
+    public URI getDynamicConfigAgentURI() throws GuacamoleException{
+        return environment.getProperty(DYNAMIC_CONFIG_AGENT_URI);
     }
 
 }

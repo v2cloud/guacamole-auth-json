@@ -27,6 +27,8 @@ import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.environment.Environment;
 import org.apache.guacamole.environment.LocalEnvironment;
 import org.apache.guacamole.net.auth.AuthenticationProvider;
+import org.glyptodon.guacamole.auth.json.conf.ConfigurationService;
+import org.glyptodon.guacamole.auth.json.conf.DynamicConfigurationService;
 import org.glyptodon.guacamole.auth.json.connection.ConnectionService;
 import org.glyptodon.guacamole.auth.json.user.UserDataService;
 
@@ -80,6 +82,7 @@ public class JSONAuthenticationProviderModule extends AbstractModule {
 
         // Bind JSON-specific services
         bind(ConfigurationService.class);
+        bind(DynamicConfigurationService.class);
         bind(ConnectionService.class);
         bind(CryptoService.class);
         bind(RequestValidationService.class);
