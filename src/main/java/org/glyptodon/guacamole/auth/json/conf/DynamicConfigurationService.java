@@ -78,7 +78,8 @@ public class DynamicConfigurationService {
             if (confService.getDynamicConfigAgentURI() != null) {
 
                 // Create WebResource for arbitrary callback
-                WebResource resource = client.resource(confService.getDynamicConfigAgentURI());
+                WebResource resource = client.resource(confService.getDynamicConfigAgentURI())
+                        .path("guac-dynamic-config");
 
                 // Attempt to retrieve UserData
                 ClientResponse response =
