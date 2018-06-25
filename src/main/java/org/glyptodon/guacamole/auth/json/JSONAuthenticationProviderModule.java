@@ -23,10 +23,16 @@
 package org.glyptodon.guacamole.auth.json;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Scopes;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
 import org.apache.guacamole.GuacamoleException;
 import org.apache.guacamole.environment.Environment;
 import org.apache.guacamole.environment.LocalEnvironment;
 import org.apache.guacamole.net.auth.AuthenticationProvider;
+import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.glyptodon.guacamole.auth.json.conf.ConfigurationService;
 import org.glyptodon.guacamole.auth.json.conf.DynamicConfigurationService;
 import org.glyptodon.guacamole.auth.json.connection.ConnectionService;
@@ -39,6 +45,11 @@ import org.glyptodon.guacamole.auth.json.user.UserDataService;
  * @author Michael Jumper
  */
 public class JSONAuthenticationProviderModule extends AbstractModule {
+
+    /**
+     * Jersey client configuration.
+     */
+    private final ClientConfig CLIENT_CONFIG = new DefaultClientConfig(JacksonJsonProvider.class);
 
     /**
      * Guacamole server environment.
@@ -88,6 +99,11 @@ public class JSONAuthenticationProviderModule extends AbstractModule {
         bind(RequestValidationService.class);
         bind(UserDataService.class);
 
+        // Bind singleton ObjectMapper for JSON serialization/deserialization
+        bind(ObjectMapper.class).in(Scopes.SINGLETON);
+
+        // Bind singleton Jersey REST client
+        bind(Client.class).toInstance(Client.create(CLIENT_CONFIG));
     }
 
 }
