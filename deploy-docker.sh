@@ -1,6 +1,6 @@
-TAG=devel # `git describe`
+TAG=latest # `git describe`
 
-echo "Building v2clouddocker/json-auth-extension:$TAG"
+echo "Building v2clouddocker/guacamole-auth-json:$TAG"
 
-docker build . --tag v2clouddocker/json-auth-extension:$TAG
-docker push v2clouddocker/json-auth-extension:$TAG
+docker build . --tag v2clouddocker/guacamole-auth-json:$TAG
+docker push v2clouddocker/guacamole-auth-json:$TAG
