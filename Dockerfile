@@ -13,6 +13,6 @@ FROM alpine:3.12
 
 RUN mkdir /build && mkdir /extensions
 
-COPY --from=builder /tmp/guacamole-extension-build/target/*.jar /build
+COPY --from=builder /tmp/json-auth-build/target/*.jar /build
 
 CMD ["/bin/sh", "-c", "rm -f /extensions/json-auth.jar; cp /build/json-auth.jar /extensions/"]
