@@ -83,7 +83,7 @@ public class DynamicConfigurationService {
 
                 // Attempt to retrieve UserData
                 ClientResponse response =
-                        resource.accept(MediaType.APPLICATION_JSON)
+                        resource.accept("application/json")
                                 .get(ClientResponse.class);
 
                 // Determine status of response
