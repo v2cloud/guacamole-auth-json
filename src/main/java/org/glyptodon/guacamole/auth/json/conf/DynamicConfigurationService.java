@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 V2Cloud, Inc.
+ * Copyright (C) 2021 V2Cloud, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,18 +24,11 @@ package org.glyptodon.guacamole.auth.json.conf;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.config.ClientConfig;
-import com.sun.jersey.api.client.config.DefaultClientConfig;
-import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
-import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+import java.net.*;
+import java.io.*;
 import org.apache.guacamole.GuacamoleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.core.MediaType;
 import javax.xml.bind.DatatypeConverter;
 
 /**
@@ -50,17 +43,6 @@ public class DynamicConfigurationService {
      */
     private final Logger logger = LoggerFactory.getLogger(ConfigurationService.class);
 
-
-    /**
-     * Jersey client configuration.
-     */
-    private final ClientConfig CLIENT_CONFIG = new DefaultClientConfig(JacksonJsonProvider.class);
-
-
-    /**
-     * Jersey REST client.
-     */
-    private Client client = Client.create(CLIENT_CONFIG);
 
     /**
      * Service for retrieving static configuration information regarding the
@@ -82,47 +64,34 @@ public class DynamicConfigurationService {
      */
     public byte[] getSecretKey() throws GuacamoleException {
 
-        // Otherwise, use defined HTTP callback
-        try {
-            if (confService.getDynamicConfigAgentURI() != null) {
+        if(confService.getDynamicConfigAgentURI() == null) {
 
-                // Create WebResource for arbitrary callback
-                WebResource resource = client.resource(confService.getDynamicConfigAgentURI())
-                        .path("guac-dynamic-config");
+            logger.info("DynamicConfigAgentURI not specified. Falling back to static key");
 
-                // Attempt to retrieve UserData
-                ClientResponse response =
-                        resource.accept("application/json")
-                                .get(ClientResponse.class);
+            return confService.getSecretKey();
 
-                // Determine status of response
-                switch (response.getClientResponseStatus().getFamily()) {
-
-                    // Return nothing if the callback reported an error
-                    case CLIENT_ERROR:
-                    case SERVER_ERROR:
-                        return confService.getSecretKey();
-
-                    // If the callback reported success, attempt to parse the
-                    // response
-                    case SUCCESSFUL:
-                        String secret = response.getEntity(DynamicConfigData.class).getGuacSecretKey();
-
-                        try {
-                            return DatatypeConverter.parseHexBinary(secret);
-                        }
-
-                        // Fail parse if hex invalid
-                        catch (IllegalArgumentException e) {
-                            logger.error("Error while parsing dynamic secret key.", e);
-                        }
-                }
-            }
-        } catch (ClientHandlerException e) {
-            logger.error("Error while retrieving dynamic secret key.", e);
         }
 
-        // If callback did not return valid JSON, use static configuration (if available)
-        return confService.getSecretKey();
+        try {
+
+            URL url = new URL(confService.getDynamicConfigAgentURI().toString());
+
+            URLConnection yc = url.openConnection();
+            BufferedReader in = new BufferedReader(new InputStreamReader(yc.getInputStream()));
+            InputStream is = url.openStream();
+            String inputLine = in.readLine();
+
+            is.close();
+
+            return DatatypeConverter.parseHexBinary(inputLine);
+
+        } catch(Exception e) {
+
+            logger.error("Error while retrieving dynamic secret key. Falling back to static key.", e);
+
+            return confService.getSecretKey();
+
+        }
+
     }
 }
