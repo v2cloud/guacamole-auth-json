@@ -174,14 +174,24 @@ public class UserDataService {
                 receivedJSON
             );
 
+
+            logger.warn("correct key hex:", DatatypeConverter.printHexBinary(dynamicConfService.getSecretKey()));
+
+            logger.warn("Received Signature:", DatatypeConverter.printBase64Binary(receivedSignature));
+            logger.warn("Correct Signature:", DatatypeConverter.printBase64Binary(correctSignature));
+
+
+            json = new String(receivedJSON, "UTF-8");
+
+            logger.warn("Submitted json UTF-8 decoded:", json);
+
+
             // Verify signatures
             if (!Arrays.equals(receivedSignature, correctSignature)) {
                 logger.warn("Signature of submitted data is incorrect.");
                 return null;
             }
 
-            // Convert from UTF-8
-            json = new String(receivedJSON, "UTF-8");
 
         }
 
