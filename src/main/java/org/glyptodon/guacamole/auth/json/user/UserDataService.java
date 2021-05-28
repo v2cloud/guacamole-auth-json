@@ -175,15 +175,26 @@ public class UserDataService {
             );
 
 
-            logger.warn("correct key hex:", DatatypeConverter.printHexBinary(dynamicConfService.getSecretKey()));
+            logger.warn("received base64:");
+            logger.warn(base64);
 
-            logger.warn("Received Signature:", DatatypeConverter.printBase64Binary(receivedSignature));
-            logger.warn("Correct Signature:", DatatypeConverter.printBase64Binary(correctSignature));
+            logger.warn("decrypted base64:");
+            logger.warn(DatatypeConverter.printBase64Binary(decrypted));
+
+            //logger.warn("correct key hex:");
+            //logger.warn(DatatypeConverter.printHexBinary(dynamicConfService.getSecretKey()));
+
+            logger.warn("Received Signature:");
+            logger.warn(DatatypeConverter.printBase64Binary(receivedSignature));
+
+            logger.warn("Correct Signature:");
+            logger.warn(DatatypeConverter.printBase64Binary(correctSignature));
 
 
             json = new String(receivedJSON, "UTF-8");
 
-            logger.warn("Submitted json UTF-8 decoded:", json);
+            logger.warn("Submitted json UTF-8 decoded:");
+            logger.warn(json);
 
 
             // Verify signatures
