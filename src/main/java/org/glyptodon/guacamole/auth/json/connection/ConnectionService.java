@@ -73,6 +73,7 @@ import org.apache.guacamole.protocol.GuacamoleConfiguration;
 import org.glyptodon.guacamole.auth.json.user.UserData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.guacamole.token.TokenFilter;
 
 /**
  * Service which provides a centralized means of establishing connections,
@@ -101,7 +102,7 @@ public class ConnectionService {
      * are tracked here.
      */
     private final ConcurrentHashMap<String, String> activeConnections =
-            new ConcurrentHashMap<String, String>();
+            new ConcurrentHashMap<>();
 
     /**
      * Mapping of the connection IDs of joinable connections (as returned via
@@ -109,7 +110,7 @@ public class ConnectionService {
      * those connections.
      */
     private final ConcurrentHashMap<String, Collection<GuacamoleTunnel>> shadowers =
-            new ConcurrentHashMap<String, Collection<GuacamoleTunnel>>();
+            new ConcurrentHashMap<>();
 
     /**
      * Generates a new GuacamoleConfiguration from the associated protocol and
@@ -196,7 +197,7 @@ public class ConnectionService {
      *     connect is denied.
      */
     public GuacamoleTunnel connect(UserData.Connection connection,
-            GuacamoleClientInformation info) throws GuacamoleException {
+            GuacamoleClientInformation info, Map<String, String> tokens) throws GuacamoleException {
 
         // Retrieve proxy configuration from environment
         GuacamoleProxyConfiguration proxyConfig = environment.getDefaultGuacamoleProxyConfiguration();
@@ -206,13 +207,17 @@ public class ConnectionService {
         int port = proxyConfig.getPort();
 
         // Generate and verify connection configuration
-        GuacamoleConfiguration config = getConfiguration(connection);
-        if (config == null) {
+        GuacamoleConfiguration filteredConfig = getConfiguration(connection);
+
+        if (filteredConfig == null) {
             logger.debug("Configuration for connection could not be "
                     + "generated. Perhaps the connection being joined is not "
                     + "active?");
             throw new GuacamoleResourceNotFoundException("No such connection");
         }
+
+        // Apply tokens to config parameters
+        new TokenFilter(tokens).filterValues(filteredConfig.getParameters());
 
         // Determine socket type based on required encryption method
         final ConfiguredGuacamoleSocket socket;
@@ -222,7 +227,7 @@ public class ConnectionService {
             case SSL:
                 socket = new ConfiguredGuacamoleSocket(
                     new SSLGuacamoleSocket(hostname, port),
-                    config, info
+                        filteredConfig, info
                 );
                 break;
 
@@ -230,7 +235,7 @@ public class ConnectionService {
             case NONE:
                 socket = new ConfiguredGuacamoleSocket(
                     new InetGuacamoleSocket(hostname, port),
-                    config, info
+                        filteredConfig, info
                 );
                 break;
 
@@ -254,7 +259,7 @@ public class ConnectionService {
             // Allow connection to be joined
             final String connectionID = socket.getConnectionID();
             final Collection<GuacamoleTunnel> existingTunnels = shadowers.putIfAbsent(connectionID,
-                    Collections.synchronizedList(new ArrayList<GuacamoleTunnel>()));
+                    Collections.synchronizedList(new ArrayList<>()));
 
             // Duplicate connection IDs cannot exist
             assert(existingTunnels == null);
@@ -307,7 +312,7 @@ public class ConnectionService {
 
         // Track tunnels which join connections, such that they can be
         // automatically closed when the joined connection closes
-        String joinedConnection = config.getConnectionID();
+        String joinedConnection = filteredConfig.getConnectionID();
         if (joinedConnection != null) {
 
             // Track shadower of joined connection if possible
